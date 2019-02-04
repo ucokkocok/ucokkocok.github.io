@@ -1,156 +1,190 @@
 <!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
 
-<html lang="en">
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: hidden;
+  }
+  canvas {
+    border: 1px solid white;
+  }
+  </style>
+</head>
+<body>
+<canvas width="400" height="400" id="game"></canvas>
+<script>
+var canvas = document.getElementById('game');
+var context = canvas.getContext('2d');
 
-	<head>
+var grid = 16;
+var snake = {
+  x: 160,
+  y: 160,
+  dx: grid,
+  dy: 0,
+  cells: [],
+  maxCells: 4
+};
+var count = 0;
+var apple = {
+  x: 320,
+  y: 320
+};
 
-		<meta charset="utf-8" />
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
 
-		<title>Snake Yonathan</title>
+// game loop
+function loop() {
+  requestAnimationFrame(loop);
 
-		<link href='http://fonts.googleapis.com/css?family=Cabin+Sketch:bold' rel='stylesheet' type='text/css'>
+  // slow game loop to 15 fps instead of 60 - 60/15 = 4
+  if (++count < 4) {
+    return;
+  }
 
-		<style type="text/css">
-			body {
-				background:#9c9;
-				text-align:center;
-			}
-			canvas {
-				background:#9c9;
-				-webkit-box-shadow:0 0 20px #000;
-				-moz-box-shadow: 0 0 20px #000;
-				box-shadow:0 0 20px #000;
-			}
-			h1 { font-family: 'Cabin Sketch', arial, serif; font-size:50px;
-				 text-indent: -100px;margin-bottom:20;margin-top:30px}
-		</style>
+  count = 0;
+  context.clearRect(0,0,canvas.width,canvas.height);
 
+  snake.x += snake.dx;
+  snake.y += snake.dy;
 
+  // wrap snake position on edge of screen
+  if (snake.x < 0) {
+    snake.x = canvas.width - grid;
+  }
+  else if (snake.x >= canvas.width) {
+    snake.x = 0;
+  }
 
-		<script type="text/javascript">
-			/**
-			 * @license HTML5 experiment Snake
-			 * http://www.xarg.org/project/html5-snake/
-			 *
-			 * Copyright (c) 2011, Robert Eisele (robert@xarg.org)
-			 * Dual licensed under the MIT or GPL Version 2 licenses.
-			 **/
-			function init() {
-				var ctx;
-				var turn  = [];
-				var xV = [-1, 0, 1, 0];
-				var yV = [0, -1, 0, 1];
-				var queue = [];
-				var elements = 1;
-				var map = [];
-				var X = 5 + (Math.random() * (45 - 10))|0;
-				var Y = 5 + (Math.random() * (30 - 10))|0;
-				var direction = Math.random() * 3 | 0;
-				var interval = 0;
-				var score = 0;
-				var inc_score = 50;
-				var sum = 0, easy = 0;
-				var i, dir;
-				var canvas = document.createElement('canvas');
-				for (i = 0; i < 45; i++) {
-					map[i] = [];
-				}
-				canvas.setAttribute('width', 45 * 10);
-				canvas.setAttribute('height', 30 * 10);
-				ctx = canvas.getContext('2d');
-				document.body.appendChild(canvas);
-				function placeFood() {
-					var x, y;
-					do {
-						x = Math.random() * 45|0;
-						y = Math.random() * 30|0;
-					} while (map[x][y]);
-					map[x][y] = 1;
-					ctx.strokeRect(x * 10 + 1, y * 10 + 1, 10 - 2, 10 - 2);
-				}
-				placeFood();
-				function clock() {
-					if (easy) {
-						X = (X+45)%45;
-						Y = (Y+30)%30;
-					}
-					--inc_score;
-					if (turn.length) {
-						dir = turn.pop();
-						if ((dir % 2) !== (direction % 2)) {
-							direction = dir;
-						}
-					}
-					if (
-					(easy || (0 <= X && 0 <= Y && X < 45 && Y < 30))
-						&& 2 !== map[X][Y]) {
-						if (1 === map[X][Y]) {
-							score+= Math.max(5, inc_score);
-							inc_score = 50;
-							placeFood();
-							elements++;
-						}
-						ctx.fillRect(X * 10, Y * 10, 10 - 1, 10 - 1);
-						map[X][Y] = 2;
-						queue.unshift([X, Y]);
-						X+= xV[direction];
-						Y+= yV[direction];
-						if (elements < queue.length) {
-							dir = queue.pop()
-							map[dir[0]][dir[1]] = 0;
-							ctx.clearRect(dir[0] * 10, dir[1] * 10, 10, 10);
-						}
-					} else if (!turn.length) {
-						if (confirm("You lost! Play again? Your Score is " + score)) {
-							ctx.clearRect(0, 0, 450, 300);
-							queue = [];
-							elements = 1;
-							map = [];
-							X = 5 + (Math.random() * (45 - 10))|0;
-							Y = 5 + (Math.random() * (30 - 10))|0;
-							direction = Math.random() * 3 | 0;
-							score = 0;
-							inc_score = 50;
-							for (i = 0; i < 45; i++) {
-								map[i] = [];
-							}
-							placeFood();
-						} else {
-							window.clearInterval(interval);
-							window.location = "/projects/";
-						}
-					}
-				}
-				interval = window.setInterval(clock, 60);
-				document.onkeydown = function(e) {
-					var code = e.keyCode - 37;
-					/*
-					 * 0: left
-					 * 1: up
-					 * 2: right
-					 * 3: down
-					 **/
-					if (0 <= code && code < 4 && code !== turn[0]) {
-						turn.unshift(code);
-					} else if (-5 == code) {
-						if (interval) {
-							window.clearInterval(interval);
-							interval = null;
-						} else {
-							interval = window.setInterval(clock, 60);
-						}
-					} else { // O.o
-						dir = sum + code;
-						if (dir == 44||dir==94||dir==126||dir==171) {
-							sum+= code
-						} else if (dir === 218) easy = 1;
-					}
-				}
-			}
-		</script>
-	</head>
+  if (snake.y < 0) {
+    snake.y = canvas.height - grid;
+  }
+  else if (snake.y >= canvas.height) {
+    snake.y = 0;
+  }
 
-	<body onload="init()">
-		<h1>SNAKE Yonathan</h1>
-	</body>
+  // keep track of where snake has been. front of the array is always the head
+  snake.cells.unshift({x: snake.x, y: snake.y});
+
+  // remove cells as we move away from them
+  if (snake.cells.length > snake.maxCells) {
+    snake.cells.pop();
+  }
+
+  // draw apple
+  context.fillStyle = 'red';
+  context.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+  // draw snake
+  context.fillStyle = 'green';
+  snake.cells.forEach(function(cell, index) {
+    context.fillRect(cell.x, cell.y, grid-1, grid-1);
+
+    // snake ate apple
+    if (cell.x === apple.x && cell.y === apple.y) {
+      snake.maxCells++;
+
+      apple.x = getRandomInt(0, 25) * grid;
+      apple.y = getRandomInt(0, 25) * grid;
+    }
+
+    // check collision with all cells after this one (modified bubble sort)
+    for (var i = index + 1; i < snake.cells.length; i++) {
+      
+      // collision. reset game
+      if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+        snake.x = 160;
+        snake.y = 160;
+        snake.cells = [];
+        snake.maxCells = 4;
+        snake.dx = grid;
+        snake.dy = 0;
+
+        apple.x = getRandomInt(0, 25) * grid;
+        apple.y = getRandomInt(0, 25) * grid;
+      }
+    }
+  });
+}
+
+var allowedTime = 200;
+var startX = 0;
+var startY = 0;
+
+document.addEventListener('touchstart', function(e){
+    var touch = e.changedTouches[0]
+    startX = touch.pageX
+    startY = touch.pageY
+    startTime = new Date().getTime()
+    e.preventDefault()
+}, false)
+
+document.addEventListener('touchmove', function(e){
+    e.preventDefault()
+}, false)
+
+document.addEventListener('touchend', function(e){
+    var touch = e.changedTouches[0]
+    distX = touch.pageX - startX
+    distY = touch.pageY - startY
+
+    if (Math.abs(distX) > Math.abs(distY)) {
+      if (distX > 0 && snake.dx === 0) {
+        snake.dx = grid;
+        snake.dy = 0;
+      }
+      else if (distX < 0 && snake.dx === 0) {
+        snake.dx = -grid;
+        snake.dy = 0;
+      }
+    } else {
+      if (distY > 0 && snake.dy === 0) {
+        snake.dy = grid;
+        snake.dx = 0;
+      }
+      else if (distY < 0 && snake.dy === 0) {
+        snake.dy = -grid;
+        snake.dx = 0;
+      }
+    }
+    e.preventDefault();
+
+}, false)
+
+document.addEventListener('keydown', function(e) {
+  // prevent snake from backtracking on itself
+  if (e.which === 37 && snake.dx === 0) {
+    snake.dx = -grid;
+    snake.dy = 0;
+  }
+  else if (e.which === 38 && snake.dy === 0) {
+    snake.dy = -grid;
+    snake.dx = 0;
+  }
+  else if (e.which === 39 && snake.dx === 0) {
+    snake.dx = grid;
+    snake.dy = 0;
+  }
+  else if (e.which === 40 && snake.dy === 0) {
+    snake.dy = grid;
+    snake.dx = 0;
+  }
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
 </html>
